@@ -101,7 +101,7 @@ ui <- fluidPage(
 # -----------------------------------------------
 server <- function(input, output) {
   
-  # 🎯 Reactive Boxplot
+  # 🎯 Boxplot Reactive
   boxplot_reactive <- reactive({
     gene <- input$selected_gene
     if (!(gene %in% rownames(counts))) return(NULL)
@@ -138,8 +138,8 @@ server <- function(input, output) {
     }
   )
   
-  # 📊 Volcano Plot
-  output$volcano <- renderPlot({
+  # 🎯 Volcano Plot Reactive
+  volcano_plot <- reactive({
     EnhancedVolcano(degs,
                     lab = degs$SYMBOL,
                     x = 'log2FoldChange',
@@ -149,17 +149,15 @@ server <- function(input, output) {
                     FCcutoff = 1)
   })
   
+  output$volcano <- renderPlot({
+    volcano_plot()
+  })
+  
   output$download_volcano <- downloadHandler(
     filename = "volcano_plot.png",
     content = function(file) {
-      png(file)
-      EnhancedVolcano(degs,
-                      lab = degs$SYMBOL,
-                      x = 'log2FoldChange',
-                      y = 'pvalue',
-                      title = 'Volcano Plot: Tumor vs Normal',
-                      pCutoff = 0.05,
-                      FCcutoff = 1)
+      png(file, width = 1000, height = 800)
+      print(volcano_plot())
       dev.off()
     }
   )
@@ -173,7 +171,7 @@ server <- function(input, output) {
   output$download_go <- downloadHandler(
     filename = "go_enrichment.png",
     content = function(file) {
-      png(file)
+      png(file, width = 1000, height = 800)
       sig_genes <- degs$SYMBOL[degs$pvalue < 0.05 & abs(degs$log2FoldChange) > 1]
       p <- get_go_plot(sig_genes)
       print(p)
@@ -190,7 +188,7 @@ server <- function(input, output) {
   output$download_kegg <- downloadHandler(
     filename = "kegg_enrichment.png",
     content = function(file) {
-      png(file)
+      png(file, width = 1000, height = 800)
       sig_genes <- degs$SYMBOL[degs$pvalue < 0.05 & abs(degs$log2FoldChange) > 1]
       p <- get_kegg_plot(sig_genes)
       print(p)
@@ -208,9 +206,6 @@ server <- function(input, output) {
   
   # 📘 About Tab
   output$about_tab <- renderUI({
-    normal_count <- sum(metadata$group == "Normal")
-    tumor_count <- sum(metadata$group == "Tumor")
-    
     tagList(
       h3("🧾 About the Dataset"),
       p("This app analyzes RNA-Seq data from the TCGA Breast Cancer (BRCA) dataset."),
@@ -230,7 +225,6 @@ server <- function(input, output) {
       h4("⚠️ Disclaimer"),
       p("This app is for educational and exploratory use only. Results may vary with different datasets or sample sizes.")
     )
-    
   })
 }
 
