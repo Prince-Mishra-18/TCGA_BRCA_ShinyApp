@@ -1,0 +1,9 @@
+
+How to Run the App Locally
+
+1. Open R or RStudio
+2. Set your working directory to the project folder
+3. Run:
+
+```r
+shiny::runApp("app/")
